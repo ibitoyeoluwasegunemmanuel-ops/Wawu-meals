@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-char-900 text-plate font-body antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid theme("colors.gold.400");
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Signature element: the "bowl-size dial" — concentric rings echoing the
+     mandala plate emblem in the Wawu Meals logo. Each size option is a ring;
+     the selected ring fills solid and the dot at its edge marks the bowl size. */
+  .size-dial {
+    @apply relative grid place-items-center rounded-full border-2 transition-all duration-200;
+    aspect-ratio: 1 / 1;
+  }
+  .size-dial[data-selected="true"] {
+    @apply border-pepper-500 bg-pepper-500 text-plate shadow-lift;
+  }
+  .size-dial[data-selected="false"] {
+    @apply border-char-700 bg-transparent text-plate/70;
+  }
+
+  .receipt-card {
+    @apply relative bg-plate text-ink rounded-card;
+    background-image:
+      radial-gradient(circle at 8px 0, transparent 8px, theme("colors.char.900") 8px, transparent 8.5px),
+      radial-gradient(circle at calc(100% - 8px) 0, transparent 8px, theme("colors.char.900") 8px, transparent 8.5px);
+    background-repeat: no-repeat;
+    background-position: top left, top right;
+  }
+
+  .dash-divider {
+    border-top: 2px dashed theme("colors.plate.line");
+  }
+
+  .step-dot {
+    @apply grid place-items-center w-8 h-8 rounded-full border-2 shrink-0 text-xs font-display;
+  }
+  .step-dot[data-done="true"] {
+    @apply bg-pepper-500 border-pepper-500 text-plate;
+  }
+  .step-dot[data-done="false"] {
+    @apply bg-transparent border-char-700 text-plate/50;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
