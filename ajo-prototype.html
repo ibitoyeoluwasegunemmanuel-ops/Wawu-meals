@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ajopal — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --indigo-950:#12172b;
+    --indigo-900:#181f3a;
+    --indigo-800:#232c50;
+    --indigo-700:#33406e;
+    --gold:#e3a83b;
+    --gold-dim:#c99429;
+    --green:#2f8f5b;
+    --green-dim:#e6f3ec;
+    --red:#c1503f;
+    --cream:#f6f2e8;
+    --cream-dim:#efe9da;
+    --ink:#181f3a;
+    --ink-soft:#5b6280;
+    --line:#e4dfd0;
+    --radius:18px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:
+      radial-gradient(circle at 20% 10%, #1c2444 0%, transparent 45%),
+      radial-gradient(circle at 80% 90%, #1a2140 0%, transparent 45%),
+      var(--indigo-950);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 16px;
+    color:var(--ink);
+  }
+  .rig{ display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .rig-label{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:#8790b3; }
+
+  .phone{
+    width:380px;
+    height:790px;
+    background:#000;
+    border-radius:46px;
+    padding:12px;
+    box-shadow:0 40px 80px -20px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04);
+    position:relative;
+  }
+  .screen{
+    width:100%; height:100%;
+    background:var(--cream);
+    border-radius:34px;
+    overflow:hidden;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+  }
+  .notch{
+    position:absolute; top:12px; left:50%; transform:translateX(-50%);
+    width:110px; height:24px; background:#000; border-radius:14px; z-index:50;
+  }
+  .statusbar{
+    height:44px; flex:0 0 auto; display:flex; align-items:center; justify-content:space-between;
+    padding:0 26px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink); font-weight:600;
+  }
+
+  .view{ flex:1 1 auto; overflow-y:auto; display:none; flex-direction:column; }
+  .view.active{ display:flex; }
+  .view::-webkit-scrollbar{ display:none; }
+
+  /* ---- shared bits ---- */
+  .adire-band{
+    background:
+      repeating-radial-gradient(circle at 0 0, transparent 0 6px, rgba(227,168,59,.10) 7px 8px),
+      linear-gradient(135deg, var(--indigo-900), var(--indigo-800));
+    color:#fff; padding:22px 20px 26px;
+    border-bottom-left-radius:24px; border-bottom-right-radius:24px;
+  }
+  .eyebrow{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; opacity:.65; }
+  h1,h2,h3{ font-family:'Space Grotesk',sans-serif; margin:0; }
+  .amount{ font-family:'IBM Plex Mono',monospace; font-variant-numeric:tabular-nums; }
+
+  .pad{ padding:18px 20px; }
+  .card{
+    background:#fff; border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px; margin-bottom:12px;
+  }
+  .row{ display:flex; align-items:center; justify-content:space-between; }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    font-family:'Inter',sans-serif; font-weight:600; font-size:14.5px;
+    border:none; border-radius:14px; padding:14px 18px; cursor:pointer;
+    width:100%;
+  }
+  .btn-primary{ background:var(--gold); color:var(--indigo-950); }
+  .btn-primary:active{ background:var(--gold-dim); }
+  .btn-ghost{ background:transparent; color:var(--indigo-900); border:1.5px solid var(--indigo-900); }
+  .btn-dark{ background:var(--indigo-900); color:#fff; }
+  .pill{
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; font-weight:600;
+    padding:4px 9px; border-radius:100px; letter-spacing:.03em;
+  }
+  .pill-paid{ background:var(--green-dim); color:var(--green); }
+  .pill-due{ background:#fbeadd; color:#a85f26; }
+  .pill-pending{ background:#eef0f7; color:var(--ink-soft); }
+  .avatar{
+    width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:14px; color:#fff; flex:0 0 auto;
+  }
+  .muted{ color:var(--ink-soft); font-size:13px; }
+  .divider{ height:1px; background:var(--line); margin:14px 0; }
+
+  /* bottom nav */
+  .navbar{
+    flex:0 0 auto; display:flex; border-top:1px solid var(--line); background:#fff;
+    padding:10px 6px 14px;
+  }
+  .navitem{
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:4px;
+    font-family:'Inter',sans-serif; font-size:10.5px; font-weight:600; color:#9298b3;
+    background:none; border:none; cursor:pointer; padding:4px;
+  }
+  .navitem.on{ color:var(--indigo-900); }
+  .navicon{ width:20px; height:20px; }
+
+  .backbar{
+    flex:0 0 auto; display:flex; align-items:center; gap:10px; padding:14px 18px 4px;
+  }
+  .backbtn{
+    width:32px; height:32px; border-radius:50%; background:#fff; border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex:0 0 auto;
+  }
+
+  /* progress ring */
+  .ring-wrap{ position:relative; width:104px; height:104px; margin:0 auto; }
+  .ring-wrap svg{ transform:rotate(-90deg); }
+  .ring-mid{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+
+  /* USSD */
+  .ussd-screen{
+    background:#0d1c14; color:#8ef0a8; font-family:'IBM Plex Mono',monospace;
+    border-radius:10px; padding:16px; font-size:13px; line-height:1.7; white-space:pre-wrap;
+    min-height:220px;
+  }
+  .keypad{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:14px; }
+  .key{
+    background:#eef0f7; border:none; border-radius:12px; padding:14px 0; font-family:'Space Grotesk',sans-serif;
+    font-weight:600; font-size:16px; color:var(--indigo-900); cursor:pointer;
+  }
+  .key:active{ background:#dfe2ee; }
+
+  .toast{
+    position:absolute; left:16px; right:16px; bottom:96px; background:var(--indigo-950); color:#fff;
+    padding:12px 14px; border-radius:12px; font-size:12.5px; display:flex; gap:8px; align-items:center;
+    opacity:0; transform:translateY(10px); transition:all .25s ease; pointer-events:none; z-index:80;
+  }
+  .toast.show{ opacity:1; transform:translateY(0); }
+
+  .rotation-item{ display:flex; align-items:center; gap:10px; padding:9px 0; }
+  .rotation-line{ width:2px; align-self:stretch; background:var(--line); margin:0 18px; }
+
+  .goalbar{ height:8px; border-radius:100px; background:var(--cream-dim); overflow:hidden; }
+  .goalbar > div{ height:100%; background:var(--green); border-radius:100px; }
+
+  @media (max-width:420px){
+    .phone{ width:100%; max-width:380px; height:82vh; min-height:640px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="rig">
+  <div class="rig-label">Ajopal — MVP V1 · Interactive Prototype</div>
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+      <div class="statusbar"><span>9:41</span><span>Ajopal</span><span>●●●● 5G</span></div>
+
+      <!-- ============ ONBOARDING ============ -->
+      <div class="view active" id="v-onboard">
+        <div class="pad" style="flex:1; display:flex; flex-direction:column; justify-content:center; gap:22px;">
+          <div>
+            <svg width="46" height="46" viewBox="0 0 46 46" fill="none">
+              <circle cx="23" cy="23" r="21" stroke="#e3a83b" stroke-width="2.4"/>
+              <circle cx="23" cy="9" r="4.2" fill="#e3a83b"/>
+              <circle cx="35" cy="23" r="3" fill="#181f3a" opacity=".55"/>
+              <circle cx="23" cy="37" r="3" fill="#181f3a" opacity=".55"/>
+              <circle cx="11" cy="23" r="3" fill="#181f3a" opacity=".55"/>
+            </svg>
+            <h1 style="font-size:28px; margin-top:14px; line-height:1.15;">Save together.<br>Build your record.</h1>
+            <p class="muted" style="font-size:14.5px; line-height:1.5; margin-top:10px;">Ajopal digitises the Ajo you already trust — for phones with data, and phones without.</p>
+          </div>
+          <div class="card" style="background:var(--indigo-900); border:none;">
+            <div class="row">
+              <div>
+                <div class="eyebrow" style="color:#e3a83b;">No smartphone? No problem</div>
+                <div style="color:#fff; font-family:'Space Grotesk',sans-serif; font-weight:600; margin-top:4px;">Dial *920# to join on any phone</div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <button class="btn btn-primary" onclick="go('v-otp')">Create account</button>
+            <div style="height:10px;"></div>
+            <button class="btn btn-ghost" onclick="go('v-home')">I already have an account</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ OTP ============ -->
+      <div class="view" id="v-otp">
+        <div class="backbar"><button class="backbtn" onclick="go('v-onboard')">←</button></div>
+        <div class="pad" style="flex:1; display:flex; flex-direction:column; justify-content:center;">
+          <div class="eyebrow" style="color:var(--ink-soft);">Step 1 of 2</div>
+          <h2 style="font-size:22px; margin-top:8px;">Confirm your number</h2>
+          <p class="muted" style="margin-top:6px;">We sent a 6-digit code to +234 803 XXX 2210</p>
+          <div style="display:flex; gap:8px; margin:26px 0;">
+            <input class="otp-box" value="4" style="width:44px;height:52px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:20px;border:1.5px solid var(--indigo-900);border-radius:10px;">
+            <input class="otp-box" value="1" style="width:44px;height:52px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:20px;border:1.5px solid var(--indigo-900);border-radius:10px;">
+            <input class="otp-box" value="9" style="width:44px;height:52px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:20px;border:1.5px solid var(--indigo-900);border-radius:10px;">
+            <input class="otp-box" value="" placeholder="" style="width:44px;height:52px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:20px;border:1.5px solid var(--line);border-radius:10px;">
+            <input class="otp-box" value="" style="width:44px;height:52px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:20px;border:1.5px solid var(--line);border-radius:10px;">
+            <input class="otp-box" value="" style="width:44px;height:52px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:20px;border:1.5px solid var(--line);border-radius:10px;">
+          </div>
+          <button class="btn btn-primary" onclick="go('v-home'); toast('Welcome — account verified')">Verify &amp; continue</button>
+        </div>
+      </div>
+
+      <!-- ============ HOME ============ -->
+      <div class="view" id="v-home">
+        <div class="adire-band">
+          <div class="row" style="align-items:flex-start;">
+            <div>
+              <div class="eyebrow">Good afternoon</div>
+              <div style="font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:16px; margin-top:2px;">Adaeze Okonkwo</div>
+            </div>
+            <div class="avatar" style="background:var(--gold); color:var(--indigo-950);">AO</div>
+          </div>
+          <div style="margin-top:22px;">
+            <div class="eyebrow">Total balance</div>
+            <div class="amount" style="font-size:30px; font-weight:600; margin-top:4px;">₦186,400.00</div>
+          </div>
+          <div style="display:flex; gap:10px; margin-top:18px;">
+            <button class="btn btn-primary" style="flex:1;" onclick="go('v-contribute')">＋ Contribute</button>
+            <button class="btn" style="flex:1; background:rgba(255,255,255,.12); color:#fff;" onclick="go('v-ajo-detail')">My Ajo</button>
+          </div>
+        </div>
+
+        <div class="pad">
+          <div class="row" style="margin-bottom:10px;">
+            <h3 style="font-size:15px;">Your groups &amp; goals</h3>
+            <span class="muted" style="font-size:12.5px;">3 active</span>
+          </div>
+
+          <div class="card" onclick="go('v-ajo-detail')" style="cursor:pointer;">
+            <div class="row">
+              <div class="row" style="gap:10px;">
+                <div class="avatar" style="background:#33406e;">🔄</div>
+                <div>
+                  <div style="font-weight:600; font-size:14.5px;">Lekki Traders Circle</div>
+                  <div class="muted">10 members · ₦10,000/week</div>
+                </div>
+              </div>
+              <span class="pill pill-due">Due in 2d</span>
+            </div>
+          </div>
+
+          <div class="card" onclick="go('v-savings')" style="cursor:pointer;">
+            <div class="row">
+              <div class="row" style="gap:10px;">
+                <div class="avatar" style="background:var(--green);">🎯</div>
+                <div>
+                  <div style="font-weight:600; font-size:14.5px;">Shop Restock Fund</div>
+                  <div class="muted">₦64,000 of ₦150,000</div>
+                </div>
+              </div>
+              <span class="pill pill-paid">On track</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="row">
+              <div class="row" style="gap:10px;">
+                <div class="avatar" style="background:#a85f26;">👪</div>
+                <div>
+                  <div style="font-weight:600; font-size:14.5px;">Family — Mama's Rent</div>
+                  <div class="muted">5 members · ₦5,000/week</div>
+                </div>
+              </div>
+              <span class="pill pill-pending">Awaiting 2</span>
+            </div>
+          </div>
+
+          <div class="card" style="background:var(--cream-dim); border-style:dashed; text-align:center; cursor:pointer;" onclick="go('v-create')">
+            <div style="font-weight:600; font-size:14px;">＋ Start a new Ajo or savings goal</div>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="navbar">
+          <button class="navitem on"><span class="navicon">🏠</span>Home</button>
+          <button class="navitem" onclick="go('v-ajo-detail')"><span class="navicon">🔄</span>My Ajo</button>
+          <button class="navitem" onclick="go('v-savings')"><span class="navicon">🎯</span>Savings</button>
+          <button class="navitem" onclick="go('v-ussd')"><span class="navicon">📞</span>USSD</button>
+          <button class="navitem" onclick="go('v-profile')"><span class="navicon">👤</span>Profile</button>
+        </div>
+      </div>
+
+      <!-- ============ AJO GROUP DETAIL ============ -->
+      <div class="view" id="v-ajo-detail">
+        <div class="backbar"><button class="backbtn" onclick="go('v-home')">←</button><div style="font-family:'Space Grotesk',sans-serif; font-weight:600;">Lekki Traders Circle</div></div>
+        <div class="pad" style="padding-top:6px;">
+          <div class="card" style="background:var(--indigo-900); border:none; color:#fff;">
+            <div class="eyebrow">Weekly pool</div>
+            <div class="amount" style="font-size:24px; font-weight:600; margin:4px 0 10px;">₦100,000</div>
+            <div class="row" style="font-size:12.5px; opacity:.85;">
+              <span>Round 4 of 10</span><span>Your payout: Round 8</span>
+            </div>
+          </div>
+
+          <div class="row" style="margin:16px 0 8px;">
+            <h3 style="font-size:14.5px;">This round — who's paid</h3>
+            <span class="pill pill-due">7 / 10 paid</span>
+          </div>
+          <div class="card">
+            <div class="rotation-item"><div class="avatar" style="background:#2f8f5b; font-size:12px;">CU</div><div style="flex:1;"><div style="font-weight:600; font-size:13.5px;">Chidi U.</div></div><span class="pill pill-paid">Paid</span></div>
+            <div class="divider" style="margin:6px 0;"></div>
+            <div class="rotation-item"><div class="avatar" style="background:#2f8f5b; font-size:12px;">BF</div><div style="flex:1;"><div style="font-weight:600; font-size:13.5px;">Blessing F.</div></div><span class="pill pill-paid">Paid</span></div>
+            <div class="divider" style="margin:6px 0;"></div>
+            <div class="rotation-item"><div class="avatar" style="background:#a85f26; font-size:12px;">TK</div><div style="flex:1;"><div style="font-weight:600; font-size:13.5px;">Tunde K.</div></div><span class="pill pill-due">Due</span></div>
+            <div class="divider" style="margin:6px 0;"></div>
+            <div class="rotation-item"><div class="avatar" style="background:var(--gold-dim); font-size:12px;">You</div><div style="flex:1;"><div style="font-weight:600; font-size:13.5px;">You</div></div><span class="pill pill-due">Due in 2d</span></div>
+          </div>
+
+          <h3 style="font-size:14.5px; margin:16px 0 8px;">Payout rotation</h3>
+          <div class="card">
+            <div class="muted" style="font-size:12.5px; line-height:1.8;">
+              ✓ R1 Ngozi &nbsp;·&nbsp; ✓ R2 Femi &nbsp;·&nbsp; ✓ R3 Grace<br>
+              → <b style="color:var(--indigo-900);">R4 Chidi (this round)</b><br>
+              R5 Blessing · R6 Tunde · R7 Kemi · <b>R8 You</b> · R9 Musa · R10 Ifeoma
+            </div>
+          </div>
+
+          <button class="btn btn-primary" style="margin-top:6px;" onclick="go('v-contribute')">Contribute my ₦10,000</button>
+        </div>
+      </div>
+
+      <!-- ============ CONTRIBUTE / PAYMENT ============ -->
+      <div class="view" id="v-contribute">
+        <div class="backbar"><button class="backbtn" onclick="go('v-home')">←</button><div style="font-family:'Space Grotesk',sans-serif; font-weight:600;">Contribute</div></div>
+        <div class="pad">
+          <div class="muted" style="margin-bottom:6px;">Paying into</div>
+          <div class="card">
+            <div class="row"><span style="font-weight:600;">Lekki Traders Circle</span><span class="pill pill-due">Round 4</span></div>
+          </div>
+          <div class="eyebrow" style="margin:18px 0 6px;">Amount</div>
+          <div class="amount" style="font-size:34px; font-weight:600;">₦10,000</div>
+          <div class="divider"></div>
+          <div class="eyebrow" style="margin-bottom:10px;">Pay with</div>
+          <div class="card" style="display:flex; align-items:center; gap:10px; border-color:var(--indigo-900); border-width:1.5px;">
+            <span>🏦</span><div style="flex:1;"><div style="font-weight:600; font-size:13.5px;">Bank transfer — GTBank •• 4471</div><div class="muted">Default</div></div><span>●</span>
+          </div>
+          <div class="card" style="display:flex; align-items:center; gap:10px;">
+            <span>💳</span><div style="flex:1;"><div style="font-weight:600; font-size:13.5px;">Card — Verve •• 8823</div></div><span>○</span>
+          </div>
+          <div class="card" style="display:flex; align-items:center; gap:10px;">
+            <span>📞</span><div style="flex:1;"><div style="font-weight:600; font-size:13.5px;">USSD — no data needed</div></div><span>○</span>
+          </div>
+        </div>
+        <div class="pad" style="padding-top:0;">
+          <button class="btn btn-primary" onclick="go('v-receipt')">Confirm ₦10,000</button>
+        </div>
+      </div>
+
+      <!-- ============ RECEIPT ============ -->
+      <div class="view" id="v-receipt">
+        <div class="pad" style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+          <div style="width:64px; height:64px; border-radius:50%; background:var(--green-dim); display:flex; align-items:center; justify-content:center; font-size:28px;">✓</div>
+          <h2 style="margin-top:16px;">Contribution received</h2>
+          <div class="amount" style="font-size:28px; font-weight:600; margin-top:6px;">₦10,000.00</div>
+          <p class="muted" style="margin-top:6px;">Lekki Traders Circle · Round 4 of 10</p>
+          <div class="card" style="width:100%; text-align:left; margin-top:22px;">
+            <div class="row" style="padding:4px 0;"><span class="muted">Reference</span><span class="amount" style="font-size:12.5px;">AJP-88213X</span></div>
+            <div class="row" style="padding:4px 0;"><span class="muted">Status</span><span class="pill pill-paid">Confirmed</span></div>
+            <div class="row" style="padding:4px 0;"><span class="muted">On-time streak</span><span style="font-weight:600; font-size:13px;">6 rounds 🔥</span></div>
+          </div>
+        </div>
+        <div class="pad" style="padding-top:0;">
+          <button class="btn btn-dark" onclick="go('v-home')">Done</button>
+        </div>
+      </div>
+
+      <!-- ============ SAVINGS GOAL ============ -->
+      <div class="view" id="v-savings">
+        <div class="backbar"><button class="backbtn" onclick="go('v-home')">←</button><div style="font-family:'Space Grotesk',sans-serif; font-weight:600;">Shop Restock Fund</div></div>
+        <div class="pad" style="align-items:center; text-align:center;">
+          <div class="ring-wrap">
+            <svg width="104" height="104">
+              <circle cx="52" cy="52" r="44" stroke="#efe9da" stroke-width="10" fill="none"/>
+              <circle cx="52" cy="52" r="44" stroke="#2f8f5b" stroke-width="10" fill="none"
+                stroke-dasharray="276" stroke-dashoffset="158" stroke-linecap="round"/>
+            </svg>
+            <div class="ring-mid">
+              <div class="amount" style="font-weight:600; font-size:16px;">43%</div>
+            </div>
+          </div>
+          <div class="amount" style="font-size:24px; font-weight:600; margin-top:14px;">₦64,000 <span style="color:var(--ink-soft); font-size:15px;">/ ₦150,000</span></div>
+          <p class="muted" style="margin-top:4px;">Target date: 15 Oct 2026 · ₦5,000 weekly</p>
+        </div>
+        <div class="pad" style="padding-top:0;">
+          <div class="card">
+            <div class="row"><span class="muted">This week</span><span class="pill pill-paid">Saved</span></div>
+            <div class="goalbar" style="margin-top:10px;"><div style="width:43%;"></div></div>
+          </div>
+          <div class="card">
+            <div class="row" style="margin-bottom:8px;"><span style="font-weight:600; font-size:13.5px;">Recent activity</span></div>
+            <div class="row" style="padding:6px 0;"><span class="muted" style="font-size:13px;">Wed · Auto-debit</span><span class="amount" style="font-size:13px;">+₦5,000</span></div>
+            <div class="row" style="padding:6px 0;"><span class="muted" style="font-size:13px;">Last Wed · Auto-debit</span><span class="amount" style="font-size:13px;">+₦5,000</span></div>
+          </div>
+          <button class="btn btn-primary" onclick="toast('₦5,000 added to Shop Restock Fund')">Add extra ₦5,000</button>
+        </div>
+      </div>
+
+      <!-- ============ CREATE AJO ============ -->
+      <div class="view" id="v-create">
+        <div class="backbar"><button class="backbtn" onclick="go('v-home')">←</button><div style="font-family:'Space Grotesk',sans-serif; font-weight:600;">Start something new</div></div>
+        <div class="pad">
+          <div class="card" onclick="go('v-savings')" style="cursor:pointer;">
+            <div style="font-weight:600; font-size:14.5px;">🎯 Individual savings goal</div>
+            <div class="muted" style="margin-top:4px;">Save alone toward rent, fees, stock or a target.</div>
+          </div>
+          <div class="card" style="border-color:var(--indigo-900); border-width:1.5px; cursor:pointer;">
+            <div style="font-weight:600; font-size:14.5px;">🔄 Rotational Ajo</div>
+            <div class="muted" style="margin-top:4px;">Everyone contributes each round; one member is paid out.</div>
+          </div>
+          <div class="card">
+            <div style="font-weight:600; font-size:14.5px;">🏪 Business Ajo</div>
+            <div class="muted" style="margin-top:4px;">For traders, artisans and market associations.</div>
+          </div>
+          <div class="card">
+            <div style="font-weight:600; font-size:14.5px;">👪 Family Ajo</div>
+            <div class="muted" style="margin-top:4px;">Private circle for rent, school fees or emergencies.</div>
+          </div>
+          <div class="card">
+            <div style="font-weight:600; font-size:14.5px;">🤝 Cooperative Ajo</div>
+            <div class="muted" style="margin-top:4px;">For registered societies managing members and loans.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ USSD ============ -->
+      <div class="view" id="v-ussd">
+        <div class="backbar"><button class="backbtn" onclick="go('v-home')">←</button><div style="font-family:'Space Grotesk',sans-serif; font-weight:600;">USSD simulator</div></div>
+        <div class="pad">
+          <p class="muted" style="margin-bottom:10px;">This is what a member with no smartphone or data sees when they dial the code — same account, same Ajo groups.</p>
+          <div class="ussd-screen" id="ussd-text">Dial *920# to begin
+
+1. My Account
+2. Make Contribution
+3. Check Balance
+4. My Ajo
+5. Next Payout
+6. Contribution History
+7. Join Ajo
+8. Savings Target
+9. Help</div>
+          <div class="keypad">
+            <button class="key" onclick="ussd(1)">1</button>
+            <button class="key" onclick="ussd(2)">2</button>
+            <button class="key" onclick="ussd(3)">3</button>
+            <button class="key" onclick="ussd(4)">4</button>
+            <button class="key" onclick="ussd(5)">5</button>
+            <button class="key" onclick="ussdReset()">↺</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ PROFILE ============ -->
+      <div class="view" id="v-profile">
+        <div class="pad">
+          <div class="row" style="margin:8px 0 18px;">
+            <div class="row" style="gap:12px;">
+              <div class="avatar" style="background:var(--gold); color:var(--indigo-950); width:52px; height:52px; font-size:18px;">AO</div>
+              <div>
+                <div style="font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:16px;">Adaeze Okonkwo</div>
+                <div class="muted">+234 803 XXX 2210 · KYC verified</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="row" style="margin-bottom:10px;">
+              <span style="font-weight:600; font-size:14px;">Financial identity</span>
+              <span class="pill pill-paid">Level 3</span>
+            </div>
+            <div class="goalbar"><div style="width:58%; background:var(--gold);"></div></div>
+            <p class="muted" style="margin-top:8px; font-size:12px; line-height:1.5;">Built from 14 months of consistent contributions across 3 groups. Levels up eligibility for future credit products — never a promise of a loan.</p>
+          </div>
+
+          <div class="card">
+            <div class="row" style="padding:6px 0;"><span class="muted">Contribution streak</span><span style="font-weight:600; font-size:13px;">14 months</span></div>
+            <div class="row" style="padding:6px 0;"><span class="muted">Groups joined</span><span style="font-weight:600; font-size:13px;">3</span></div>
+            <div class="row" style="padding:6px 0;"><span class="muted">On-time rate</span><span style="font-weight:600; font-size:13px;">96%</span></div>
+          </div>
+
+          <div class="card">
+            <div class="row" style="padding:6px 0;"><span>Statements &amp; receipts</span><span>›</span></div>
+            <div class="divider" style="margin:2px 0;"></div>
+            <div class="row" style="padding:6px 0;"><span>Linked bank &amp; cards</span><span>›</span></div>
+            <div class="divider" style="margin:2px 0;"></div>
+            <div class="row" style="padding:6px 0;"><span>Security &amp; PIN</span><span>›</span></div>
+            <div class="divider" style="margin:2px 0;"></div>
+            <div class="row" style="padding:6px 0;"><span>Help &amp; disputes</span><span>›</span></div>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="navbar">
+          <button class="navitem" onclick="go('v-home')"><span class="navicon">🏠</span>Home</button>
+          <button class="navitem" onclick="go('v-ajo-detail')"><span class="navicon">🔄</span>My Ajo</button>
+          <button class="navitem" onclick="go('v-savings')"><span class="navicon">🎯</span>Savings</button>
+          <button class="navitem" onclick="go('v-ussd')"><span class="navicon">📞</span>USSD</button>
+          <button class="navitem on"><span class="navicon">👤</span>Profile</button>
+        </div>
+      </div>
+
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+  <div class="rig-label" id="hint">Tap around — try "My Ajo", "Contribute", or the USSD tab (dial without a smartphone)</div>
+</div>
+
+<script>
+  function go(id){
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.view.active').forEach(v => v.scrollTop = 0);
+  }
+  function toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(()=> t.classList.remove('show'), 2200);
+  }
+  const ussdSteps = {
+    1: "1. My Account\n\nName: Adaeze Okonkwo\nStatus: Verified\nWallet: *2210\n\n0. Back",
+    2: "2. Make Contribution\n\nSelect group:\n1. Lekki Traders (₦10,000)\n2. Family Rent (₦5,000)\n\n0. Back",
+    3: "3. Check Balance\n\nWallet balance:\nN186,400.00\n\n0. Back",
+    4: "4. My Ajo\n\n1. Lekki Traders — Round 4/10\n2. Family Rent — Round 2/5\n\n0. Back",
+    5: "5. Next Payout\n\nLekki Traders Circle\nYour payout: Round 8\nEst. 14 Sep 2026\n\n0. Back"
+  };
+  function ussd(n){
+    document.getElementById('ussd-text').textContent = ussdSteps[n] || "Invalid option.\n\n0. Back";
+  }
+  function ussdReset(){
+    document.getElementById('ussd-text').textContent = `Dial *920# to begin
+
+1. My Account
+2. Make Contribution
+3. Check Balance
+4. My Ajo
+5. Next Payout
+6. Contribution History
+7. Join Ajo
+8. Savings Target
+9. Help`;
+  }
+</script>
+</body>
+</html>
